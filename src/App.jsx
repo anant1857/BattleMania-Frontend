@@ -6,6 +6,7 @@ import Login from "./pages/Login"
 import Lobby from "./pages/Lobby"
 import Match from "./pages/Match"
 import Profile from "./pages/Profile"
+import AdminDashboard from "./pages/AdminDashboard"
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("login")
@@ -18,8 +19,13 @@ export default function App() {
     const storedUser = localStorage.getItem("user")
     if (storedToken && storedUser) {
       setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-      setCurrentPage("lobby")
+      const userData = JSON.parse(storedUser)
+      setUser(userData)
+      if (userData.role === "admin") {
+        setCurrentPage("admin")
+      } else {
+        setCurrentPage("lobby")
+      }
     }
   }, [])
 
@@ -28,7 +34,11 @@ export default function App() {
     setToken(authToken)
     localStorage.setItem("token", authToken)
     localStorage.setItem("user", JSON.stringify(userData))
-    setCurrentPage("lobby")
+    if (userData.role === "admin") {
+      setCurrentPage("admin")
+    } else {
+      setCurrentPage("lobby")
+    }
   }
 
   const handleLogout = () => {
@@ -58,9 +68,21 @@ export default function App() {
     setCurrentPage("lobby")
   }
 
+  const handleBackFromAdmin = () => {
+    setCurrentPage("lobby")
+  }
+
   return (
     <div className="app">
       {currentPage === "login" && <Login onLogin={handleLogin} />}
+      
+      {currentPage === "admin" && user && user.role === "admin" && (
+        <AdminDashboard 
+          user={user} 
+          onLogout={handleLogout}
+          onBack={handleBackFromAdmin}
+        />
+      )}
       
       {currentPage === "lobby" && user && (
         <Lobby 
