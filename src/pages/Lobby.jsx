@@ -6,7 +6,7 @@ import "./Lobby.css"
 import RoomList from "../components/RoomList"
 import CreateRoomModal from "../components/CreateRoomModal"
 
-export default function Lobby({ user, onLogout, onJoinRoom }) {
+export default function Lobby({ user, onLogout, onJoinRoom, onViewProfile }) {
   const [rooms, setRooms] = useState([])
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -51,6 +51,9 @@ export default function Lobby({ user, onLogout, onJoinRoom }) {
       <header className="lobby-header">
         <h1>BATTLEGAME LOBBY</h1>
         <div className="user-info">
+          <button onClick={onViewProfile} className="profile-btn">
+            👤 Profile
+          </button>
           <span>Welcome, {user.username}</span>
           <button onClick={onLogout} className="logout-btn">
             Logout

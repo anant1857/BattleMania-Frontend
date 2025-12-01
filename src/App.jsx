@@ -34,6 +34,7 @@ export default function App() {
   const handleLogout = () => {
     setUser(null)
     setToken(null)
+    setSelectedRoom(null)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     setCurrentPage("login")
@@ -49,14 +50,41 @@ export default function App() {
     setCurrentPage("lobby")
   }
 
+  const handleViewProfile = () => {
+    setCurrentPage("profile")
+  }
+
+  const handleBackToLobbyFromProfile = () => {
+    setCurrentPage("lobby")
+  }
+
   return (
     <div className="app">
       {currentPage === "login" && <Login onLogin={handleLogin} />}
-      {currentPage === "lobby" && user && <Lobby user={user} onLogout={handleLogout} onJoinRoom={handleJoinRoom} />}
-      {currentPage === "match" && user && selectedRoom && (
-        <Match user={user} room={selectedRoom} onBack={handleBackToLobby} />
+      
+      {currentPage === "lobby" && user && (
+        <Lobby 
+          user={user} 
+          onLogout={handleLogout} 
+          onJoinRoom={handleJoinRoom}
+          onViewProfile={handleViewProfile}
+        />
       )}
-      {currentPage === "profile" && user && <Profile user={user} onBack={() => setCurrentPage("lobby")} />}
+      
+      {currentPage === "match" && user && selectedRoom && (
+        <Match 
+          user={user} 
+          room={selectedRoom} 
+          onBack={handleBackToLobby} 
+        />
+      )}
+      
+      {currentPage === "profile" && user && (
+        <Profile 
+          user={user} 
+          onBack={handleBackToLobbyFromProfile} 
+        />
+      )}
     </div>
   )
 }

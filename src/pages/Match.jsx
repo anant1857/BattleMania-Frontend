@@ -7,6 +7,7 @@ import "./Match.css"
 import Battlefield from "../components/Battlefield"
 import ActionPanel from "../components/ActionPanel"
 import StatsPanel from "../components/StatsPanel"
+import GameEndModal from "../components/GameEndModal"
 
 const SERVER_URL = "http://localhost:5000"
 
@@ -25,21 +26,23 @@ export default function Match({ user, room, onBack }) {
   const [allReady, setAllReady] = useState(false)
   const [error, setError] = useState("")
   const [isHost, setIsHost] = useState(false)
+  const [showEndModal, setShowEndModal] = useState(false)
+  const [gameResult, setGameResult] = useState(null)
   const socketRef = useRef(null)
 
-  // Reconnect to room & socket setup
   useEffect(() => {
     const reconnectToRoom = async () => {
       try {
         const { data } = await axios.get(`${SERVER_URL}/api/rooms/${room._id}`)
         setCurrentRoom(data)
         setIsHost(data.host._id === user.id)
-        // Initialize ready statuses
+        
         const readyMap = {}
         data.players.forEach((player) => {
           readyMap[player._id] = data.readyPlayers.some((rp) => rp._id === player._id)
         })
         setReadyStatus(readyMap)
+        
         const allPlayersReady =
           data.players.length > 1 && data.players.every((p) => data.readyPlayers.some((rp) => rp._id === p._id))
         setAllReady(allPlayersReady)
@@ -56,39 +59,43 @@ export default function Match({ user, room, onBack }) {
     socketRef.current = newSocket
     setSocket(newSocket)
 
-    
     newSocket.emit("create_room", { 
-  roomId: room._id, 
-  hostId: user.id, 
-  hostName: user.username 
-});
-    newSocket.emit("join_room", {
-      roomId: room._id,
-      playerId: user.id,
-      playerName: user.username,
+      roomId: room._id, 
+      hostId: user.id, 
+      hostName: user.username 
     })
 
-    // Handle updated room state
-  newSocket.on("room_updated", (updatedRoom) => {
-  setCurrentRoom(updatedRoom)
-  // Sync ready status
-  const readyMap = {}
-  updatedRoom.players.forEach((player) => {
-    readyMap[player._id] = updatedRoom.readyPlayers.some((rp) => rp._id === player._id)
-  })
-  setReadyStatus(readyMap)
-  const allPlayersReady = updatedRoom.players.length > 1 &&
-    updatedRoom.players.every((p) =>
-      updatedRoom.readyPlayers.some((rp) => rp._id === p._id)
-    )
-  setAllReady(allPlayersReady)
-  // ---- ADD THIS: update live game state from Room status
-  setGameState((prev) => ({
-    ...prev,
-    gameActive: updatedRoom.status === "playing",
-  }))
-})
+    setTimeout(() => {
+      newSocket.emit("join_room", {
+        roomId: room._id,
+        playerId: user.id,
+        playerName: user.username,
+      })
+    }, 100)
 
+    newSocket.on("room_updated", (updatedRoom) => {
+      console.log("Room updated received:", updatedRoom)
+      setCurrentRoom(updatedRoom)
+      
+      const readyMap = {}
+      updatedRoom.players.forEach((player) => {
+        readyMap[player._id] = updatedRoom.readyPlayers.some((rp) => rp._id === player._id)
+      })
+      setReadyStatus(readyMap)
+      
+      console.log("Ready status map:", readyMap)
+      
+      const allPlayersReady = updatedRoom.players.length > 1 &&
+        updatedRoom.players.every((p) =>
+          updatedRoom.readyPlayers.some((rp) => rp._id === p._id)
+        )
+      setAllReady(allPlayersReady)
+      
+      setGameState((prev) => ({
+        ...prev,
+        gameActive: updatedRoom.status === "playing",
+      }))
+    })
 
     newSocket.on("player_joined", () => {
       reconnectToRoom()
@@ -102,15 +109,10 @@ export default function Match({ user, room, onBack }) {
       reconnectToRoom()
     })
 
-    // --- ADD THESE EVENT LISTENERS ---
-
-
-    // Listen for game started
     newSocket.on("game_started", () => {
       setGameState((prev) => ({ ...prev, gameActive: true }))
     })
 
-    // Listen for unit_spawned
     newSocket.on("unit_spawned", (unit) => {
       setGameState((prev) => ({
         ...prev,
@@ -118,29 +120,30 @@ export default function Match({ user, room, onBack }) {
       }))
     })
 
-    // Listen for game tick (periodic state, e.g., units, scores, timer)
-newSocket.on("game_tick", (data) => {
-  setGameState((prevState) => ({
-    ...prevState,  // ← Keep existing properties
-    ...data,       // ← Merge in new data
-  }))
-})
-
-    // Listen for game ended (optional)
-    newSocket.on("game_ended", (data) => {
-      setGameState((prev) => ({ ...prev, gameActive: false }))
-      // Optionally trigger UI state/info here if wanted
+    newSocket.on("game_tick", (data) => {
+      setGameState((prevState) => ({
+        ...prevState,
+        ...data,
+      }))
     })
-    // --- END OF NEW EVENT LISTENERS ---
+
+    newSocket.on("game_ended", (data) => {
+      setGameState((prev) => ({ 
+        ...prev, 
+        gameActive: false,
+      }))
+      setGameResult(data)
+      setShowEndModal(true)
+    })
 
     return () => {
       newSocket.disconnect()
     }
-  }, [room, user, onBack])
+  }, [room._id, user.id, user.username, onBack])
 
-  // Toggle ready status
   const toggleReady = () => {
     if (socketRef.current) {
+      console.log("Toggling ready for user:", user.id)
       socketRef.current.emit("toggle_ready", {
         roomId: currentRoom._id,
         playerId: user.id,
@@ -149,14 +152,12 @@ newSocket.on("game_tick", (data) => {
     }
   }
 
-  // Start game only if host and all ready
   const startGame = () => {
     if (socketRef.current && allReady) {
       socketRef.current.emit("start_game", { roomId: currentRoom._id })
     }
   }
 
-  // Spawn unit
   const spawnUnit = (unitType) => {
     if (socketRef.current && gameState.gameActive) {
       const x = Math.random() * 600 + 50
@@ -171,6 +172,11 @@ newSocket.on("game_tick", (data) => {
     }
   }
 
+  const handleReturnToLobby = () => {
+    setShowEndModal(false)
+    onBack()
+  }
+
   if (error) {
     return (
       <div className="match-container">
@@ -181,13 +187,11 @@ newSocket.on("game_tick", (data) => {
 
   return (
     <div className="match-container">
-      {/* Header */}
       <header className="match-header">
         <h1>{currentRoom.name}</h1>
         <button onClick={onBack} className="back-btn">← Back</button>
       </header>
 
-      {/* Main Content */}
       <div className="match-content">
         <div className="game-section">
           <Battlefield canvasRef={canvasRef} gameState={gameState} userId={user.id} />
@@ -197,15 +201,12 @@ newSocket.on("game_tick", (data) => {
         <div className="sidebar">
           <StatsPanel gameState={gameState} players={currentRoom.players} userId={user.id} />
 
-          {/* Ready Section */}
           {!gameState.gameActive ? (
             <>
-              {/* Ready button for both host and players */}
               <button onClick={toggleReady} className={`ready-btn ${readyStatus[user.id] ? "active" : ""}`}>
                 {readyStatus[user.id] ? "✓ Ready" : "Not Ready"}
               </button>
 
-              {/* Host Start Button */}
               {isHost && (
                 <button
                   onClick={startGame}
@@ -220,7 +221,6 @@ newSocket.on("game_tick", (data) => {
                 </button>
               )}
 
-              {/* Players' readiness status */}
               <div className="players-ready">
                 <h4>Ready Status:</h4>
                 {currentRoom.players?.map((player) => (
@@ -240,6 +240,15 @@ newSocket.on("game_tick", (data) => {
           )}
         </div>
       </div>
+
+      {showEndModal && gameResult && (
+        <GameEndModal
+          gameResult={gameResult}
+          currentUser={user}
+          players={currentRoom.players}
+          onReturnToLobby={handleReturnToLobby}
+        />
+      )}
     </div>
   )
 }
