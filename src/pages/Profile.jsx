@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import "./Profile.css"
 
-const SERVER_URL = "http://localhost:5000"
+const SERVER_URL = "https://battlemania-backend.onrender.com"
 
 export default function Profile({ user, onBack }) {
   const [userData, setUserData] = useState(null)
