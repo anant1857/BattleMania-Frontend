@@ -9,7 +9,7 @@ import ActionPanel from "../components/ActionPanel"
 import StatsPanel from "../components/StatsPanel"
 import GameEndModal from "../components/GameEndModal"
 
-const SERVER_URL = "https://battlemania-backend.onrender.com"
+const SERVER_URL = import.meta.env.VITE_API_URL;
 
 // const SERVER_URL = "http://localhost:5000"
 
