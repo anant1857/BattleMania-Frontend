@@ -6,6 +6,8 @@ import "./AdminDashboard.css"
 
 const SERVER_URL = "https://battlemania-backend.onrender.com"
 
+// const SERVER_URL = "http://localhost:5000"
+
 export default function AdminDashboard({ user, onLogout, onBack }) {
   const [stats, setStats] = useState(null)
   const [activeTab, setActiveTab] = useState("dashboard")

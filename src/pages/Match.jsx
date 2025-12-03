@@ -11,6 +11,8 @@ import GameEndModal from "../components/GameEndModal"
 
 const SERVER_URL = "https://battlemania-backend.onrender.com"
 
+// const SERVER_URL = "http://localhost:5000"
+
 export default function Match({ user, room, onBack }) {
   const canvasRef = useRef(null)
 
