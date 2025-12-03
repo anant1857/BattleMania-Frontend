@@ -4,6 +4,9 @@ import { useState } from "react"
 import axios from "axios"
 import "./RoomList.css"
 
+const SERVER_URL = import.meta.env.VITE_API_URL
+
+
 export default function RoomList({ rooms, user, onJoinRoom }) {
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [passwordInput, setPasswordInput] = useState("")
@@ -24,7 +27,7 @@ export default function RoomList({ rooms, user, onJoinRoom }) {
     try {
       setJoining(true)
       const { data } = await axios.post(
-        `/api/rooms/${room._id}/join`,
+        `${SERVER_URL}/api/rooms/${room._id}/join`,
         { password: pwd },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } },
       )
