@@ -6,6 +6,9 @@ import "./Lobby.css"
 import RoomList from "../components/RoomList"
 import CreateRoomModal from "../components/CreateRoomModal"
 
+
+const SERVER_URL = import.meta.env.VITE_API_URL
+
 export default function Lobby({ user, onLogout, onJoinRoom, onViewProfile }) {
   const [rooms, setRooms] = useState([])
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -19,7 +22,7 @@ export default function Lobby({ user, onLogout, onJoinRoom, onViewProfile }) {
 
   const fetchRooms = async () => {
     try {
-      const { data } = await axios.get("/api/rooms")
+      const { data } = await axios.get(`${SERVER_URL}/api/rooms`)
       setRooms(data)
       setLoading(false)
     } catch (error) {
@@ -31,7 +34,7 @@ export default function Lobby({ user, onLogout, onJoinRoom, onViewProfile }) {
   const handleCreateRoom = async (roomData) => {
     try {
       const { data } = await axios.post(
-        "/api/rooms",
+        `${SERVER_URL}/api/rooms`,
         {
           name: roomData.name,
           password: roomData.password,

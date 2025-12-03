@@ -4,9 +4,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import "./AdminDashboard.css"
 
-const SERVER_URL = import.meta.env.VITE_API_URL;
-
-// const SERVER_URL = "http://localhost:5000"
+const SERVER_URL = import.meta.env.VITE_API_URL
 
 export default function AdminDashboard({ user, onLogout, onBack }) {
   const [stats, setStats] = useState(null)

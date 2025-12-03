@@ -9,9 +9,7 @@ import ActionPanel from "../components/ActionPanel"
 import StatsPanel from "../components/StatsPanel"
 import GameEndModal from "../components/GameEndModal"
 
-const SERVER_URL = import.meta.env.VITE_API_URL;
-
-// const SERVER_URL = "http://localhost:5000"
+const SERVER_URL = import.meta.env.VITE_API_URL
 
 export default function Match({ user, room, onBack }) {
   const canvasRef = useRef(null)

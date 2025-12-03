@@ -4,7 +4,7 @@ import { useState } from "react"
 import axios from "axios"
 import "./Login.css"
 
-const SERVER_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL
 
 export default function Login({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -29,7 +29,7 @@ export default function Login({ onLogin }) {
 
     try {
       if (isLogin) {
-        const { data } = await axios.post(`${SERVER_URL}/api/auth/login`, {
+        const { data } = await axios.post(`${API_URL}/api/auth/login`, {
           email: formData.email,
           password: formData.password,
         })
@@ -40,7 +40,7 @@ export default function Login({ onLogin }) {
           setLoading(false)
           return
         }
-        const { data } = await axios.post(`${SERVER_URL}/api/auth/register`, {
+        const { data } = await axios.post(`${API_URL}/api/auth/register`, {
           username: formData.username,
           email: formData.email,
           password: formData.password,
